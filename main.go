@@ -15,13 +15,13 @@ func main() {
 
     router := mux.NewRouter()
     router.HandleFunc("/movies/index.m3u8", serverVersion).Methods("GET")
-    router.PathPrefix("/movies").Handler(http.FileServer(http.Dir("./movies/"))) // TODO: use sendfile from nginx
+    router.PathPrefix("/").Handler(http.FileServer(http.Dir("./movies/"))) // TODO: use sendfile from nginx
     log.Fatal(http.ListenAndServe("0.0.0.0:8080", router))
 }
 
 func serverVersion(w http.ResponseWriter, r *http.Request) {
-    movie  := openPlaylist("./movies/index.m3u8")
-    advert := openPlaylist("./adverts/index.m3u8")
+    movie  := openPlaylist("./movies/film1/index.m3u8")
+    advert := openPlaylist("./movies/advert/index.m3u8")
 
     size := movie.Count() + advert.Count()
     playlist, err := m3u8.NewMediaPlaylist(size, size)
