@@ -19,9 +19,7 @@ func main() {
 
     rand.Seed(time.Now().Unix())
 
-    loadAdvert("./movies/advert1/index.m3u8")
-    loadAdvert("./movies/advert2/index.m3u8")
-    loadAdvert("./movies/advert3/index.m3u8")
+    loadAdvert("./movies/warning/index.m3u8")
 
     router := mux.NewRouter()
     router.HandleFunc("/{name:[A-Za-z0-9]+}/index.m3u8", streamPlaylist).Methods("GET")
@@ -32,10 +30,20 @@ func main() {
 func streamPlaylist(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     file := fmt.Sprintf("./movies/%s/index.m3u8", vars["name"])
-    //fmt.Println(file)
-    movie  := openPlaylist(file)
-    advert := adverts[random(0, len(adverts))]
-    size := movie.Count() + advert.Count()
+
+    movie := openPlaylist(file)
+    size := movie.Count()
+
+    var advert *m3u8.MediaPlaylist
+
+    if len(adverts) > 0 {
+        advert = adverts[random(0, len(adverts))]
+
+        if advert != nil {
+            size += advert.Count()
+        }
+    }
+
     playlist, err := m3u8.NewMediaPlaylist(size, size)
 
     if err != nil {
@@ -43,21 +51,30 @@ func streamPlaylist(w http.ResponseWriter, r *http.Request) {
     }
 
     playlist.MediaType = m3u8.VOD
+    isFirst := true
 
-    addPlaylist(playlist, advert, true)
-    addPlaylist(playlist, movie, false)
+    if advert != nil {
+        addPlaylist(playlist, advert, isFirst)
+        isFirst = false
+    }
+
+    addPlaylist(playlist, movie, isFirst)
 
     playlist.Close()
 
+    w.Header().Set("Access-Control-Allow-Origin", "*")
     w.Header().Set("Content-Type", "application/x-mpegURL")
+
     w.Write(playlist.Encode().Bytes())
 }
 
 func streamSegment(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     file := fmt.Sprintf("./movies/%s/s/%s", vars["name"], vars["segment"])
-    //fmt.Println(file)
+
+    w.Header().Set("Access-Control-Allow-Origin", "*")
     w.Header().Set("Content-Type", "video/MP2T")
+
     http.ServeFile(w, r, file)
 }
 
@@ -99,5 +116,5 @@ func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool) {
 }
 
 func random(min, max int) int {
-    return rand.Intn(max - min) + min
+    return rand.Intn(max-min) + min
 }
