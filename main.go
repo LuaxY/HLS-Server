@@ -12,24 +12,33 @@ import (
     "math/rand"
 )
 
+var cfg Config
 var adverts []*m3u8.MediaPlaylist
 
 func main() {
     fmt.Println("HLS Server")
 
+    cfg = LoadConfiguration("config.json")
     rand.Seed(time.Now().Unix())
 
-    loadAdvert("./movies/warning/index.m3u8")
+    //loadAdvert(cfg.MoviePath + "warning/index.m3u8")
 
     router := mux.NewRouter()
     router.HandleFunc("/{name:[A-Za-z0-9]+}/index.m3u8", streamPlaylist).Methods("GET")
     router.HandleFunc("/{name:[A-Za-z0-9]+}/s/{segment:[0-9]+.ts}", streamSegment).Methods("GET")
-    log.Fatal(http.ListenAndServe("0.0.0.0:8080", router))
+
+    log.Printf("Start listening on %s", cfg.Listen)
+
+    log.Fatal(http.ListenAndServe(cfg.Listen, router))
 }
 
 func streamPlaylist(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    file := fmt.Sprintf("./movies/%s/index.m3u8", vars["name"])
+    file := cfg.MoviePath + vars["name"] + "/index.m3u8"
+
+    if cfg.VerboseLevel >= 1 {
+        log.Print(file)
+    }
 
     movie := openPlaylist(file)
     size := movie.Count()
@@ -70,7 +79,11 @@ func streamPlaylist(w http.ResponseWriter, r *http.Request) {
 
 func streamSegment(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    file := fmt.Sprintf("./movies/%s/s/%s", vars["name"], vars["segment"])
+    file := cfg.MoviePath + vars["name"] + "/s/" + vars["segment"]
+
+    if cfg.VerboseLevel >= 1 {
+        log.Print(file)
+    }
 
     w.Header().Set("Access-Control-Allow-Origin", "*")
     w.Header().Set("Content-Type", "video/MP2T")
