@@ -25,6 +25,7 @@ func main() {
 
     router := mux.NewRouter()
     router.HandleFunc("/{name:[A-Za-z0-9]+}/index.m3u8", streamPlaylist).Methods("GET")
+    router.HandleFunc("/{name:[A-Za-z0-9]+}/file.key", streamKey).Methods("GET")
     router.HandleFunc("/{name:[A-Za-z0-9]+}/s/{segment:[0-9]+.ts}", streamSegment).Methods("GET")
 
     log.Printf("Start listening on %s", cfg.Listen)
@@ -77,6 +78,20 @@ func streamPlaylist(w http.ResponseWriter, r *http.Request) {
     w.Write(playlist.Encode().Bytes())
 }
 
+func streamKey(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    file := cfg.MoviePath + vars["name"] + "/file.key"
+
+    if cfg.VerboseLevel >= 1 {
+        log.Print(file)
+    }
+
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Set("Content-Type", "application/octet-stream")
+
+    http.ServeFile(w, r, file)
+}
+
 func streamSegment(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     file := cfg.MoviePath + vars["name"] + "/s/" + vars["segment"]
@@ -115,6 +130,8 @@ func openPlaylist(file string) *m3u8.MediaPlaylist {
 }
 
 func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool) {
+    key := playlist.Key
+    destination.SetKey(key.Method, key.URI, key.IV, key.Keyformat, key.Keyformatversions)
     destination.AppendSegment(playlist.Segments[0])
 
     if !isFirst {
