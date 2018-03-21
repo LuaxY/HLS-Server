@@ -1,43 +1,28 @@
-package main
+package handler
 
 import (
-    "fmt"
+    "bufio"
     "log"
+    "math/rand"
     "net/http"
+    "os"
+
+    "HLS-Server/src/config"
+
     "github.com/gorilla/mux"
     "github.com/grafov/m3u8"
-    "bufio"
-    "os"
-    "time"
-    "math/rand"
 )
 
-var cfg Config
+var cfg = config.Get()
 var adverts []*m3u8.MediaPlaylist
 
-func main() {
-    fmt.Println("HLS Server")
+//loadAdvert(cfg.MoviePath + "warning/index.m3u8")
 
-    cfg = LoadConfiguration("config.json")
-    rand.Seed(time.Now().Unix())
-
-    //loadAdvert(cfg.MoviePath + "warning/index.m3u8")
-
-    router := mux.NewRouter()
-    router.HandleFunc("/{name:[A-Za-z0-9]+}/index.m3u8", streamPlaylist).Methods("GET")
-    router.HandleFunc("/{name:[A-Za-z0-9]+}/file.key", streamKey).Methods("GET")
-    router.HandleFunc("/{name:[A-Za-z0-9]+}/s/{segment:[0-9]+.ts}", streamSegment).Methods("GET")
-
-    log.Printf("Start listening on %s", cfg.Listen)
-
-    log.Fatal(http.ListenAndServe(cfg.Listen, router))
-}
-
-func streamPlaylist(w http.ResponseWriter, r *http.Request) {
+func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    file := cfg.MoviePath + vars["name"] + "/index.m3u8"
+    file := cfg.MoviesPath + vars["name"] + "/index.m3u8"
 
-    if cfg.VerboseLevel >= 1 {
+    if cfg.Debug.VerbosityLevel >= 1 {
         log.Print(file)
     }
 
@@ -72,17 +57,16 @@ func streamPlaylist(w http.ResponseWriter, r *http.Request) {
 
     playlist.Close()
 
-    w.Header().Set("Access-Control-Allow-Origin", "*")
     w.Header().Set("Content-Type", "application/x-mpegURL")
 
     w.Write(playlist.Encode().Bytes())
 }
 
-func streamKey(w http.ResponseWriter, r *http.Request) {
+func StreamKey(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    file := cfg.MoviePath + vars["name"] + "/file.key"
+    file := cfg.MoviesPath + vars["name"] + "/file.key"
 
-    if cfg.VerboseLevel >= 1 {
+    if cfg.Debug.VerbosityLevel >= 1 {
         log.Print(file)
     }
 
@@ -92,15 +76,14 @@ func streamKey(w http.ResponseWriter, r *http.Request) {
     http.ServeFile(w, r, file)
 }
 
-func streamSegment(w http.ResponseWriter, r *http.Request) {
+func StreamSegment(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    file := cfg.MoviePath + vars["name"] + "/s/" + vars["segment"]
+    file := cfg.MoviesPath + vars["name"] + "/s/" + vars["segment"]
 
-    if cfg.VerboseLevel >= 1 {
+    if cfg.Debug.VerbosityLevel >= 1 {
         log.Print(file)
     }
 
-    w.Header().Set("Access-Control-Allow-Origin", "*")
     w.Header().Set("Content-Type", "video/MP2T")
 
     http.ServeFile(w, r, file)

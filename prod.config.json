@@ -1,7 +1,7 @@
 {
   "ports": {
-    "http": "80",
-    "https": "443"
+    "http": "",
+    "https": "8081"
   },
   "tls": {
     "cert": "./cert/watchnow.crt",
@@ -10,7 +10,7 @@
   },
   "host": "ec233.akamaihls.com",
   "aes": "220318054fb290cd1d2a255dcc5eb64be500e65c48f1655ab509f4dd7625d75f",
-  "movies": "./movies/",
+  "movies": "/home/movies/",
   "debug": {
     "verbosityLevel": 2
   }

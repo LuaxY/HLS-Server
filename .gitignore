@@ -1,4 +1,4 @@
 .idea/
-config.json
+dev.config.json
 *.m3u8
 *.ts
