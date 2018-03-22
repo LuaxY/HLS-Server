@@ -2,19 +2,20 @@ package main
 
 import (
     "crypto/tls"
-    "log"
     "math/rand"
     "net/http"
     "time"
 
     "HLS-Server/src/config"
     "HLS-Server/src/handler"
+    "HLS-Server/src/logger"
     "HLS-Server/src/middleware"
 
     "github.com/gorilla/mux"
     "golang.org/x/net/http2"
 )
 
+var log = logger.Get()
 var cfg = config.Get()
 
 func main() {
@@ -59,6 +60,6 @@ func main() {
         }))
     }
 
-    log.Printf("Start listening on port HTTP %s and HTTPS %s", cfg.Ports.HTTP, cfg.Ports.HTTPS)
+    log.Infof("Start listening on port HTTP %s and HTTPS %s", cfg.Ports.HTTP, cfg.Ports.HTTPS)
     log.Fatal(srv.ListenAndServeTLS(cfg.TLS.Cert, cfg.TLS.Key))
 }

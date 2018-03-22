@@ -2,17 +2,18 @@ package handler
 
 import (
     "bufio"
-    "log"
     "math/rand"
     "net/http"
     "os"
 
     "HLS-Server/src/config"
+    "HLS-Server/src/logger"
 
     "github.com/gorilla/mux"
     "github.com/grafov/m3u8"
 )
 
+var log = logger.Get()
 var cfg = config.Get()
 var adverts []*m3u8.MediaPlaylist
 
@@ -23,10 +24,18 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     file := cfg.MoviesPath + vars["name"] + "/index.m3u8"
 
     if cfg.Debug.VerbosityLevel >= 1 {
-        log.Print(file)
+        log.Debug(file)
     }
 
-    movie := openPlaylist(file)
+    movie, err := openPlaylist(file)
+
+    if err != nil {
+        log.Error(err)
+        w.WriteHeader(http.StatusInternalServerError)
+        w.Write([]byte("Error"))
+        return
+    }
+
     size := movie.Count()
 
     var advert *m3u8.MediaPlaylist
@@ -42,18 +51,36 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     playlist, err := m3u8.NewMediaPlaylist(size, size)
 
     if err != nil {
-        panic(err)
+        log.Error(err)
+        w.WriteHeader(http.StatusInternalServerError)
+        w.Write([]byte("Error"))
+        return
     }
 
     playlist.MediaType = m3u8.VOD
     isFirst := true
 
     if advert != nil {
-        addPlaylist(playlist, advert, isFirst)
+        err = addPlaylist(playlist, advert, isFirst)
+
+        if err != nil {
+            log.Error(err)
+            w.WriteHeader(http.StatusInternalServerError)
+            w.Write([]byte("Error"))
+            return
+        }
+
         isFirst = false
     }
 
-    addPlaylist(playlist, movie, isFirst)
+    err = addPlaylist(playlist, movie, isFirst)
+
+    if err != nil {
+        log.Error(err)
+        w.WriteHeader(http.StatusInternalServerError)
+        w.Write([]byte("Error"))
+        return
+    }
 
     playlist.Close()
 
@@ -67,7 +94,7 @@ func StreamKey(w http.ResponseWriter, r *http.Request) {
     file := cfg.MoviesPath + vars["name"] + "/file.key"
 
     if cfg.Debug.VerbosityLevel >= 1 {
-        log.Print(file)
+        log.Debug(file)
     }
 
     w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -81,7 +108,7 @@ func StreamSegment(w http.ResponseWriter, r *http.Request) {
     file := cfg.MoviesPath + vars["name"] + "/s/" + vars["segment"]
 
     if cfg.Debug.VerbosityLevel >= 1 {
-        log.Print(file)
+        log.Debug(file)
     }
 
     w.Header().Set("Content-Type", "video/MP2T")
@@ -90,42 +117,69 @@ func StreamSegment(w http.ResponseWriter, r *http.Request) {
 }
 
 func loadAdvert(file string) {
-    playlist := openPlaylist(file)
+    playlist, err := openPlaylist(file)
+
+    if err != nil {
+        log.Error(err)
+        return
+    }
+
     adverts = append(adverts, playlist)
 }
 
-func openPlaylist(file string) *m3u8.MediaPlaylist {
+func openPlaylist(file string) (*m3u8.MediaPlaylist, error) {
     f, err := os.Open(file)
 
     defer f.Close()
 
     if err != nil {
-        panic(err)
+        return nil, err
     }
 
     p, _, err := m3u8.DecodeFrom(bufio.NewReader(f), true)
 
     if err != nil {
-        panic(err)
+        return nil, err
     }
 
-    return p.(*m3u8.MediaPlaylist)
+    return p.(*m3u8.MediaPlaylist), nil
 }
 
-func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool) {
+func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool) error {
+    var err error
     key := playlist.Key
-    destination.SetKey(key.Method, key.URI, key.IV, key.Keyformat, key.Keyformatversions)
-    destination.AppendSegment(playlist.Segments[0])
+
+    err = destination.SetKey(key.Method, key.URI, key.IV, key.Keyformat, key.Keyformatversions)
+
+    if err != nil {
+        return err
+    }
+
+    err = destination.AppendSegment(playlist.Segments[0])
+
+    if err != nil {
+        return err
+    }
 
     if !isFirst {
-        destination.SetDiscontinuity()
+        err = destination.SetDiscontinuity()
+
+        if err != nil {
+            return err
+        }
     }
 
     for _, segment := range playlist.Segments[1:playlist.Count()] {
         if segment != nil {
-            destination.AppendSegment(segment)
+            err = destination.AppendSegment(segment)
+
+            if err != nil {
+                return err
+            }
         }
     }
+
+    return nil
 }
 
 func random(min, max int) int {

@@ -1,10 +1,10 @@
 package config
 
 import (
-    "os"
     "encoding/json"
     "flag"
     "log"
+    "os"
 )
 
 var cfg = LoadConfiguration()
@@ -20,6 +20,14 @@ type Config struct {
         Key  string `json:"key"`
         HPKP string `json:"hpkp"`
     } `json:"tls"`
+
+    ElasticSearch struct {
+        Host  string `json:"host"`
+        Port  string `json:"port"`
+        User  string `json:"user"`
+        Pass  string `json:"pass"`
+        Index string `json:"index"`
+    } `json:"elasticsearch"`
 
     Host       string `json:"host"`
     AES        string `json:"aes"`
