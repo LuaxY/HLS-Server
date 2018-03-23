@@ -1,4 +1,5 @@
 .idea/
+logs/
 dev.config.json
 *.m3u8
 *.ts
