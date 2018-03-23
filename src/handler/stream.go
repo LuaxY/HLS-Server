@@ -147,12 +147,15 @@ func openPlaylist(file string) (*m3u8.MediaPlaylist, error) {
 
 func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool) error {
     var err error
-    key := playlist.Key
 
-    err = destination.SetKey(key.Method, key.URI, key.IV, key.Keyformat, key.Keyformatversions)
+    if playlist.Key != nil {
+        key := playlist.Key
 
-    if err != nil {
-        return err
+        err = destination.SetKey(key.Method, key.URI, key.IV, key.Keyformat, key.Keyformatversions)
+
+        if err != nil {
+            return err
+        }
     }
 
     err = destination.AppendSegment(playlist.Segments[0])
