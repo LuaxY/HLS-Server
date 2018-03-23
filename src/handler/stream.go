@@ -6,12 +6,14 @@ import (
     "net/http"
     "os"
     "regexp"
+    "strconv"
 
     "HLS-Server/src/config"
     "HLS-Server/src/logger"
 
     "github.com/gorilla/mux"
     "github.com/grafov/m3u8"
+    "github.com/sirupsen/logrus"
 )
 
 var log = logger.Get()
@@ -31,7 +33,12 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     movie, err := openPlaylist(file)
 
     if err != nil {
-        log.Error(err)
+        log.WithFields(logrus.Fields{
+            "id":            vars["name"],
+            "key":           vars["key"],
+            "file":          file,
+            "segment_count": strconv.FormatUint(uint64(movie.Count()), 10),
+        }).Error(err)
         w.WriteHeader(http.StatusInternalServerError)
         w.Write([]byte("Error"))
         return
@@ -52,7 +59,12 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     playlist, err := m3u8.NewMediaPlaylist(size, size)
 
     if err != nil {
-        log.Error(err)
+        log.WithFields(logrus.Fields{
+            "id":            vars["name"],
+            "key":           vars["key"],
+            "file":          file,
+            "segment_count": strconv.FormatUint(uint64(movie.Count()), 10),
+        }).Error(err)
         w.WriteHeader(http.StatusInternalServerError)
         w.Write([]byte("Error"))
         return
@@ -66,6 +78,7 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
 
         if err != nil {
             log.Error(err)
+
             w.WriteHeader(http.StatusInternalServerError)
             w.Write([]byte("Error"))
             return
@@ -77,7 +90,12 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     err = addPlaylist(playlist, movie, isFirst, vars["key"])
 
     if err != nil {
-        log.Error(err)
+        log.WithFields(logrus.Fields{
+            "id":            vars["name"],
+            "key":           vars["key"],
+            "file":          file,
+            "segment_count": strconv.FormatUint(uint64(movie.Count()), 10),
+        }).Error(err)
         w.WriteHeader(http.StatusInternalServerError)
         w.Write([]byte("Error"))
         return
