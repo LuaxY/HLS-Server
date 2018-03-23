@@ -5,6 +5,7 @@ import (
     "math/rand"
     "net/http"
     "os"
+    "regexp"
 
     "HLS-Server/src/config"
     "HLS-Server/src/logger"
@@ -61,7 +62,7 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     isFirst := true
 
     if advert != nil {
-        err = addPlaylist(playlist, advert, isFirst)
+        err = addPlaylist(playlist, advert, isFirst, "???")
 
         if err != nil {
             log.Error(err)
@@ -73,7 +74,7 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
         isFirst = false
     }
 
-    err = addPlaylist(playlist, movie, isFirst)
+    err = addPlaylist(playlist, movie, isFirst, vars["key"])
 
     if err != nil {
         log.Error(err)
@@ -85,7 +86,6 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     playlist.Close()
 
     w.Header().Set("Content-Type", "application/x-mpegURL")
-
     w.Write(playlist.Encode().Bytes())
 }
 
@@ -97,9 +97,7 @@ func StreamKey(w http.ResponseWriter, r *http.Request) {
         log.Debug(file)
     }
 
-    w.Header().Set("Access-Control-Allow-Origin", "*")
     w.Header().Set("Content-Type", "application/octet-stream")
-
     http.ServeFile(w, r, file)
 }
 
@@ -112,7 +110,6 @@ func StreamSegment(w http.ResponseWriter, r *http.Request) {
     }
 
     w.Header().Set("Content-Type", "video/MP2T")
-
     http.ServeFile(w, r, file)
 }
 
@@ -145,7 +142,7 @@ func openPlaylist(file string) (*m3u8.MediaPlaylist, error) {
     return p.(*m3u8.MediaPlaylist), nil
 }
 
-func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool) error {
+func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, key string) error {
     var err error
 
     if playlist.Key != nil {
@@ -157,6 +154,9 @@ func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool) error 
             return err
         }
     }
+
+    re := regexp.MustCompile(`\/[a-zA-Z0-9]\/s\/([0-9]+).ts`)
+    playlist.Segments[0].URI = re.ReplaceAllString(playlist.Segments[0].URI, "/"+key+"/s/$1.ts")
 
     err = destination.AppendSegment(playlist.Segments[0])
 
@@ -174,6 +174,7 @@ func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool) error 
 
     for _, segment := range playlist.Segments[1:playlist.Count()] {
         if segment != nil {
+            segment.URI = re.ReplaceAllString(segment.URI, "/"+key+"/s/$1.ts")
             err = destination.AppendSegment(segment)
 
             if err != nil {

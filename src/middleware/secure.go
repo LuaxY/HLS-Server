@@ -11,13 +11,15 @@ var cfg = config.Get()
 
 func Secure(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        if !strings.EqualFold(r.Host, cfg.Host) {
-            w.WriteHeader(http.StatusForbidden)
-            w.Write([]byte("403 Forbidden"))
-            return
+        if cfg.Host != "" {
+            if !strings.EqualFold(r.Host, cfg.Host) {
+                w.WriteHeader(http.StatusForbidden)
+                w.Write([]byte("403 Forbidden"))
+                return
+            }
         }
 
-        w.Header().Set("Access-Control-Allow-Origin", "*") // TEMP, for dev
+        w.Header().Set("Access-Control-Allow-Origin", "*")                                 // TEMP, for dev
         w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains") // WARN: use 'preload' only when project is in stable production
 
         if cfg.TLS.HPKP != "" {
