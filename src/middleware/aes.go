@@ -24,14 +24,14 @@ func AES(next http.Handler) http.Handler {
         vars := mux.Vars(r)
 
         key, _ := hex.DecodeString(cfg.AES)
-        keyDecoded, _ := hex.DecodeString(vars["key"])
+        keyDecoded, _ := hex.DecodeString(vars["token"])
         data, _ := decrypt(key, keyDecoded)
         json.Unmarshal(data, &linkInfo)
 
-        vars["name"] = strconv.FormatUint(linkInfo.ID, 10)
+        vars["id"] = strconv.FormatUint(linkInfo.ID, 10)
 
         re := regexp.MustCompile(`^\/[a-zA-Z0-9]+\/(.*)`)
-        r.RequestURI = re.ReplaceAllString(r.RequestURI, "/"+vars["name"]+"/$1")
+        r.RequestURI = re.ReplaceAllString(r.RequestURI, "/"+vars["id"]+"/$1")
 
         mux.SetURLVars(r, vars)
 

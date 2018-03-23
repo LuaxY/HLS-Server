@@ -24,7 +24,7 @@ var adverts []*m3u8.MediaPlaylist
 
 func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    file := cfg.MoviesPath + vars["name"] + "/index.m3u8"
+    file := cfg.MoviesPath + vars["id"] + "/index.m3u8"
 
     if cfg.Debug.VerbosityLevel >= 1 {
         log.Debug(file)
@@ -34,10 +34,10 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
 
     if err != nil {
         log.WithFields(logrus.Fields{
-            "id":            vars["name"],
-            "key":           vars["key"],
-            "file":          file,
-            "segment_count": strconv.FormatUint(uint64(movie.Count()), 10),
+            "id":    vars["id"],
+            "token": vars["token"],
+            "file":  file,
+            "count": strconv.FormatUint(uint64(movie.Count()), 10),
         }).Error(err)
         w.WriteHeader(http.StatusInternalServerError)
         w.Write([]byte("Error"))
@@ -60,10 +60,10 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
 
     if err != nil {
         log.WithFields(logrus.Fields{
-            "id":            vars["name"],
-            "key":           vars["key"],
-            "file":          file,
-            "segment_count": strconv.FormatUint(uint64(movie.Count()), 10),
+            "id":    vars["id"],
+            "token": vars["token"],
+            "file":  file,
+            "count": strconv.FormatUint(uint64(movie.Count()), 10),
         }).Error(err)
         w.WriteHeader(http.StatusInternalServerError)
         w.Write([]byte("Error"))
@@ -87,14 +87,14 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
         isFirst = false
     }
 
-    err = addPlaylist(playlist, movie, isFirst, vars["key"])
+    err = addPlaylist(playlist, movie, isFirst, vars["token"])
 
     if err != nil {
         log.WithFields(logrus.Fields{
-            "id":            vars["name"],
-            "key":           vars["key"],
-            "file":          file,
-            "segment_count": strconv.FormatUint(uint64(movie.Count()), 10),
+            "id":    vars["id"],
+            "token": vars["token"],
+            "file":  file,
+            "count": strconv.FormatUint(uint64(movie.Count()), 10),
         }).Error(err)
         w.WriteHeader(http.StatusInternalServerError)
         w.Write([]byte("Error"))
@@ -109,7 +109,7 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
 
 func StreamKey(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    file := cfg.MoviesPath + vars["name"] + "/file.key"
+    file := cfg.MoviesPath + vars["id"] + "/file.key"
 
     if cfg.Debug.VerbosityLevel >= 1 {
         log.Debug(file)
@@ -121,7 +121,7 @@ func StreamKey(w http.ResponseWriter, r *http.Request) {
 
 func StreamSegment(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    file := cfg.MoviesPath + vars["name"] + "/s/" + vars["segment"]
+    file := cfg.MoviesPath + vars["id"] + "/s/" + vars["segment"]
 
     if cfg.Debug.VerbosityLevel >= 1 {
         log.Debug(file)
@@ -160,21 +160,15 @@ func openPlaylist(file string) (*m3u8.MediaPlaylist, error) {
     return p.(*m3u8.MediaPlaylist), nil
 }
 
-func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, key string) error {
+func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, token string) error {
     var err error
 
+    re := regexp.MustCompile(`\/[a-zA-Z0-9]+\/s\/([0-9]+).ts`)
+    playlist.Segments[0].URI = re.ReplaceAllString(playlist.Segments[0].URI, "/"+token+"/s/$1.ts")
+
     if playlist.Key != nil {
-        key := playlist.Key
-
-        err = destination.SetKey(key.Method, key.URI, key.IV, key.Keyformat, key.Keyformatversions)
-
-        if err != nil {
-            return err
-        }
+        playlist.Segments[0].Key.URI = "/" + token + "/file.key"
     }
-
-    re := regexp.MustCompile(`\/[a-zA-Z0-9]\/s\/([0-9]+).ts`)
-    playlist.Segments[0].URI = re.ReplaceAllString(playlist.Segments[0].URI, "/"+key+"/s/$1.ts")
 
     err = destination.AppendSegment(playlist.Segments[0])
 
@@ -192,7 +186,7 @@ func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, key st
 
     for _, segment := range playlist.Segments[1:playlist.Count()] {
         if segment != nil {
-            segment.URI = re.ReplaceAllString(segment.URI, "/"+key+"/s/$1.ts")
+            segment.URI = re.ReplaceAllString(segment.URI, "/"+token+"/s/$1.ts")
             err = destination.AppendSegment(segment)
 
             if err != nil {
@@ -200,7 +194,6 @@ func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, key st
             }
         }
     }
-
     return nil
 }
 
