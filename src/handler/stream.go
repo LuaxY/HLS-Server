@@ -9,6 +9,7 @@ import (
     "strconv"
 
     "HLS-Server/src/config"
+    "HLS-Server/src/errors"
     "HLS-Server/src/logger"
 
     "github.com/gorilla/mux"
@@ -33,15 +34,14 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     movie, err := openPlaylist(file)
 
     if err != nil {
-        log.WithFields(logrus.Fields{
-            "id":    vars["id"],
-            "token": vars["token"],
-            "file":  file,
-            "count": strconv.FormatUint(uint64(movie.Count()), 10),
-        }).Error(err)
-        w.WriteHeader(http.StatusInternalServerError)
-        w.Write([]byte("Error"))
-        return
+        panic(errors.Error{
+            err,
+            logrus.Fields{
+                "id":    vars["id"],
+                "token": vars["token"],
+                "file":  file,
+            },
+        })
     }
 
     size := movie.Count()
@@ -59,15 +59,15 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     playlist, err := m3u8.NewMediaPlaylist(size, size)
 
     if err != nil {
-        log.WithFields(logrus.Fields{
-            "id":    vars["id"],
-            "token": vars["token"],
-            "file":  file,
-            "count": strconv.FormatUint(uint64(movie.Count()), 10),
-        }).Error(err)
-        w.WriteHeader(http.StatusInternalServerError)
-        w.Write([]byte("Error"))
-        return
+        panic(errors.Error{
+            err,
+            logrus.Fields{
+                "id":    vars["id"],
+                "token": vars["token"],
+                "file":  file,
+                "count": strconv.FormatUint(uint64(movie.Count()), 10),
+            },
+        })
     }
 
     playlist.MediaType = m3u8.VOD
@@ -77,11 +77,16 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
         err = addPlaylist(playlist, advert, isFirst, "???")
 
         if err != nil {
-            log.Error(err)
-
-            w.WriteHeader(http.StatusInternalServerError)
-            w.Write([]byte("Error"))
-            return
+            panic(errors.Error{
+                err,
+                logrus.Fields{
+                    "id":           vars["id"],
+                    "token":        vars["token"],
+                    "file":         file,
+                    "count":        strconv.FormatUint(uint64(movie.Count()), 10),
+                    "count_advert": strconv.FormatUint(uint64(advert.Count()), 10),
+                },
+            })
         }
 
         isFirst = false
@@ -90,15 +95,15 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     err = addPlaylist(playlist, movie, isFirst, vars["token"])
 
     if err != nil {
-        log.WithFields(logrus.Fields{
-            "id":    vars["id"],
-            "token": vars["token"],
-            "file":  file,
-            "count": strconv.FormatUint(uint64(movie.Count()), 10),
-        }).Error(err)
-        w.WriteHeader(http.StatusInternalServerError)
-        w.Write([]byte("Error"))
-        return
+        panic(errors.Error{
+            err,
+            logrus.Fields{
+                "id":    vars["id"],
+                "token": vars["token"],
+                "file":  file,
+                "count": strconv.FormatUint(uint64(movie.Count()), 10),
+            },
+        })
     }
 
     playlist.Close()
