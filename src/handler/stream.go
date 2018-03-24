@@ -5,7 +5,6 @@ import (
     "math/rand"
     "net/http"
     "os"
-    "strconv"
 
     "HLS-Server/src/config"
     "HLS-Server/src/errors"
@@ -64,7 +63,7 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
                 "id":    vars["id"],
                 "token": vars["token"],
                 "file":  file,
-                "count": strconv.FormatUint(uint64(movie.Count()), 10),
+                "count": movie.Count(),
             },
         })
     }
@@ -82,8 +81,8 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
                     "id":           vars["id"],
                     "token":        vars["token"],
                     "file":         file,
-                    "count":        strconv.FormatUint(uint64(movie.Count()), 10),
-                    "count_advert": strconv.FormatUint(uint64(advert.Count()), 10),
+                    "count":        movie.Count(),
+                    "count_advert": advert.Count(),
                 },
             })
         }
@@ -100,7 +99,7 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
                 "id":    vars["id"],
                 "token": vars["token"],
                 "file":  file,
-                "count": strconv.FormatUint(uint64(movie.Count()), 10),
+                "count": movie.Count(),
             },
         })
     }
