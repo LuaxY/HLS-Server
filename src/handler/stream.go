@@ -5,7 +5,6 @@ import (
     "math/rand"
     "net/http"
     "os"
-    "regexp"
     "strconv"
 
     "HLS-Server/src/config"
@@ -168,8 +167,8 @@ func openPlaylist(file string) (*m3u8.MediaPlaylist, error) {
 func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, token string) error {
     var err error
 
-    re := regexp.MustCompile(`\/[a-zA-Z0-9]+\/s\/([0-9]+).ts`)
-    playlist.Segments[0].URI = re.ReplaceAllString(playlist.Segments[0].URI, "/"+token+"/s/$1.ts")
+    //re := regexp.MustCompile(`\/[a-zA-Z0-9]+\/s\/([0-9]+).ts`)
+    //playlist.Segments[0].URI = re.ReplaceAllString(playlist.Segments[0].URI, "/"+token+"/s/$1.ts")
 
     if playlist.Key != nil {
         playlist.Segments[0].Key.URI = "/" + token + "/file.key"
@@ -191,7 +190,7 @@ func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, token 
 
     for _, segment := range playlist.Segments[1:playlist.Count()] {
         if segment != nil {
-            segment.URI = re.ReplaceAllString(segment.URI, "/"+token+"/s/$1.ts")
+            //segment.URI = re.ReplaceAllString(segment.URI, "/"+token+"/s/$1.ts")
             err = destination.AppendSegment(segment)
 
             if err != nil {

@@ -24,7 +24,7 @@ func main() {
     router := mux.NewRouter()
     router.HandleFunc("/{token:[A-Za-z0-9]+}/index.m3u8", handler.StreamPlaylist).Methods("GET")
     router.HandleFunc("/{token:[A-Za-z0-9]+}/file.key", handler.StreamKey).Methods("GET")
-    router.HandleFunc("/{token:[A-Za-z0-9]+}/s/{segment:[0-9]+.ts}", handler.StreamSegment).Methods("GET")
+    router.HandleFunc("/{id:[0-9]+}/s/{segment:[0-9]+.ts}", handler.StreamSegment).Methods("GET")
 
     router.Use(middleware.PanicRecover)
     router.Use(middleware.Secure)

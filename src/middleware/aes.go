@@ -20,20 +20,23 @@ type LinkInfo struct {
 
 func AES(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        var linkInfo LinkInfo
         vars := mux.Vars(r)
 
-        key, _ := hex.DecodeString(cfg.AES)
-        keyDecoded, _ := hex.DecodeString(vars["token"])
-        data, _ := decrypt(key, keyDecoded)
-        json.Unmarshal(data, &linkInfo)
+        if vars["token"] != "" {
+            var linkInfo LinkInfo
 
-        vars["id"] = strconv.FormatUint(linkInfo.ID, 10)
+            key, _ := hex.DecodeString(cfg.AES)
+            keyDecoded, _ := hex.DecodeString(vars["token"])
+            data, _ := decrypt(key, keyDecoded)
+            json.Unmarshal(data, &linkInfo)
 
-        re := regexp.MustCompile(`^\/[a-zA-Z0-9]+\/(.*)`)
-        r.RequestURI = re.ReplaceAllString(r.RequestURI, "/"+vars["id"]+"/$1")
+            vars["id"] = strconv.FormatUint(linkInfo.ID, 10)
 
-        mux.SetURLVars(r, vars)
+            re := regexp.MustCompile(`^\/[a-zA-Z0-9]+\/(.*)`)
+            r.RequestURI = re.ReplaceAllString(r.RequestURI, "/"+vars["id"]+"/$1")
+
+            mux.SetURLVars(r, vars)
+        }
 
         next.ServeHTTP(w, r)
     })
