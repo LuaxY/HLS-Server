@@ -1,7 +1,7 @@
 {
   "ports": {
-    "http": "",
-    "https": "8081"
+    "http": "5004",
+    "https": "5005"
   },
   "tls": {
     "cert": "./cert/watchnow.crt",
@@ -11,9 +11,9 @@
   "elasticsearch": {
     "host": "localhost",
     "port": "9200",
-    "user": "elastic",
-    "pass": "SLx86A9MRhlcbM2C4Bwq",
-    "index": "hls-2006.01.02"
+    "user": "",
+    "pass": "",
+    "index": "watchnow-hls"
   },
   "host": "ec233.akamaihls.com",
   "aes": "220318054fb290cd1d2a255dcc5eb64be500e65c48f1655ab509f4dd7625d75f",

@@ -6,10 +6,10 @@ import (
 
     "HLS-Server/src/config"
 
+    "github.com/olivere/elastic"
     "github.com/rifflock/lfshook"
     "github.com/sirupsen/logrus"
-    "gopkg.in/olivere/elastic.v5"
-    "gopkg.in/sohlich/elogrus.v2"
+    "github.com/sohlich/elogrus"
 )
 
 var log = Init()
@@ -27,7 +27,8 @@ func Init() *logrus.Logger {
 func getElasticSearchHook() logrus.Hook {
     client, err := elastic.NewClient(
         elastic.SetURL("http://"+cfg.ElasticSearch.Host+":"+cfg.ElasticSearch.Port),
-        elastic.SetBasicAuth(cfg.ElasticSearch.User, cfg.ElasticSearch.Pass),
+        elastic.SetSniff(false),
+        //elastic.SetBasicAuth(cfg.ElasticSearch.User, cfg.ElasticSearch.Pass),
     )
 
     if err != nil {
@@ -39,7 +40,7 @@ func getElasticSearchHook() logrus.Hook {
     hook, err := elogrus.NewAsyncElasticHookWithFunc(
         client, cfg.ElasticSearch.Host, logrus.GetLevel(), func() string {
             t := time.Now()
-            return fmt.Sprintf(t.Format(cfg.ElasticSearch.Index))
+            return fmt.Sprintf(t.Format(cfg.ElasticSearch.Index + "-2006.01.02"))
         })
 
     if err != nil {
