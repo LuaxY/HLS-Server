@@ -23,7 +23,7 @@ var adverts []*m3u8.MediaPlaylist
 
 func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    file := cfg.MoviesPath + vars["id"] + "/index.m3u8"
+    file := cfg.MoviesPath + vars["id"] + "/" + vars["quality"] + "/index.m3u8"
 
     if cfg.Debug.VerbosityLevel >= 1 {
         log.Debug(file)
@@ -124,7 +124,7 @@ func StreamKey(w http.ResponseWriter, r *http.Request) {
 
 func StreamSegment(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    file := cfg.MoviesPath + vars["id"] + "/s/" + vars["segment"]
+    file := cfg.MoviesPath + vars["id"] + "/" + vars["quality"] + "/s/" + vars["segment"]
 
     if cfg.Debug.VerbosityLevel >= 1 {
         log.Debug(file)
