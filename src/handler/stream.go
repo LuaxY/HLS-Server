@@ -173,6 +173,8 @@ func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, token 
         playlist.Segments[0].Key.URI = "/" + token + "/file.key"
     }
 
+    playlist.Segments[0].URI = "/movie" + playlist.Segments[0].URI // FIXME
+
     err = destination.AppendSegment(playlist.Segments[0])
 
     if err != nil {
@@ -190,6 +192,7 @@ func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, token 
     for _, segment := range playlist.Segments[1:playlist.Count()] {
         if segment != nil {
             //segment.URI = re.ReplaceAllString(segment.URI, "/"+token+"/s/$1.ts")
+            segment.URI = "/movie" + segment.URI // FIXME
             err = destination.AppendSegment(segment)
 
             if err != nil {
