@@ -13,9 +13,11 @@ import (
 )
 
 type LinkInfo struct {
-    ID     uint64 `json:"id"`
-    IP     string `json:"ip"`
-    Expire string `json:"expire"`
+    ID      int    `json:"id"`
+    Season  int    `json:"season"`
+    Episode int    `json:"episode"`
+    IP      string `json:"ip"`
+    Expire  string `json:"expire"`
 }
 
 func AES(next http.Handler) http.Handler {
@@ -30,7 +32,9 @@ func AES(next http.Handler) http.Handler {
             data, _ := decrypt(key, keyDecoded)
             json.Unmarshal(data, &linkInfo)
 
-            vars["id"] = strconv.FormatUint(linkInfo.ID, 10)
+            vars["id"] = strconv.FormatUint(uint64(linkInfo.ID), 10)
+            vars["season"] = strconv.FormatUint(uint64(linkInfo.Season), 10)
+            vars["episode"] = strconv.FormatUint(uint64(linkInfo.Episode), 10)
 
             re := regexp.MustCompile(`^\/[a-zA-Z0-9]+\/(.*)`)
             r.RequestURI = re.ReplaceAllString(r.RequestURI, "/"+vars["id"]+"/$1")

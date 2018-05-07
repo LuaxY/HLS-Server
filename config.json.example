@@ -18,6 +18,7 @@
   "host": "ec233.akamaihls.com",
   "aes": "220318054fb290cd1d2a255dcc5eb64be500e65c48f1655ab509f4dd7625d75f",
   "movies": "./movies/",
+  "tv": "./tv/",
   "debug": {
     "verbosityLevel": 2
   }
