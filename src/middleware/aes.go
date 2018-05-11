@@ -36,8 +36,8 @@ func AES(next http.Handler) http.Handler {
             vars["season"] = strconv.FormatUint(uint64(linkInfo.Season), 10)
             vars["episode"] = strconv.FormatUint(uint64(linkInfo.Episode), 10)
 
-            re := regexp.MustCompile(`^\/[a-zA-Z0-9]+\/(.*)`)
-            r.RequestURI = re.ReplaceAllString(r.RequestURI, "/"+vars["type"]+"/"+vars["id"]+"/$1")
+            re := regexp.MustCompile(`^\/(tv|movie)\/[a-zA-Z0-9]+\/(.*)`)
+            r.RequestURI = re.ReplaceAllString(r.RequestURI, "/"+vars["type"]+"/"+vars["id"]+"/$2")
 
             mux.SetURLVars(r, vars)
         }

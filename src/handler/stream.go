@@ -2,6 +2,7 @@ package handler
 
 import (
     "bufio"
+    "fmt"
     "math/rand"
     "net/http"
     "os"
@@ -20,6 +21,29 @@ var cfg = config.Get()
 var adverts []*m3u8.MediaPlaylist
 
 //loadAdvert(cfg.MoviePath + "warning/index.m3u8")
+
+func MasterPlaylist(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    master := m3u8.NewMasterPlaylist()
+
+    params480p := m3u8.VariantParams{
+        Bandwidth:  1200000,
+        Resolution: "854x480",
+        Name:       "480p SD",
+    }
+
+    params720p := m3u8.VariantParams{
+        Bandwidth:  6000000,
+        Resolution: "1280x720",
+        Name:       "720p HD",
+    }
+
+    master.Append(fmt.Sprintf("/movie/%s/%d/index.m3u8", vars["token"], 480), nil, params480p)
+    master.Append(fmt.Sprintf("/movie/%s/%d/index.m3u8", vars["token"], 720), nil, params720p)
+
+    w.Header().Set("Content-Type", "application/x-mpegURL")
+    w.Write(master.Encode().Bytes())
+}
 
 func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
