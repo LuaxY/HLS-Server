@@ -50,9 +50,9 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     var file string
 
     if vars["category"] == "tv" {
-        file = cfg.Path + vars["category"] + "s/" + vars["id"] + "/" + vars["season"] + "/" + vars["episode"] + "/" + vars["quality"] + "/index.m3u8"
+        file = cfg.Path + "tvs/" + vars["id"] + "/" + vars["season"] + "/" + vars["episode"] + "/" + vars["quality"] + "/index.m3u8"
     } else {
-        file = cfg.Path + vars["category"] + "s/" + vars["id"] + "/" + vars["quality"] + "/index.m3u8"
+        file = cfg.Path + "movies/" + vars["id"] + "/" + vars["quality"] + "/index.m3u8"
     }
 
     if cfg.Debug.VerbosityLevel >= 1 {
@@ -142,7 +142,13 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
 
 func StreamKey(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    file := cfg.Path + vars["category"] + "s/" + vars["id"] + "/file.key"
+    var file string
+
+    if vars["category"] == "tv" {
+        file = cfg.Path + "movies/" + vars["id"] + "/" + vars["season"] + "/" + vars["episode"] + "/" + vars["quality"] + "/file.key"
+    } else {
+        file = cfg.Path + "tvs/" + vars["id"] + "/" + vars["quality"] + "/file.key"
+    }
 
     if cfg.Debug.VerbosityLevel >= 1 {
         log.Debug(file)
