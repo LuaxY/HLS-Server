@@ -31,8 +31,7 @@ type Config struct {
 
     Host       string `json:"host"`
     AES        string `json:"aes"`
-    MoviesPath string `json:"movies"`
-    TVPath     string `json:"tv"`
+    Path       string `json:"path"`
 
     Debug struct {
         VerbosityLevel int `json:"verbosityLevel"`

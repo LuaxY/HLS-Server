@@ -22,10 +22,11 @@ func main() {
     rand.Seed(time.Now().Unix())
 
     router := mux.NewRouter()
-    router.HandleFunc("/{type:movie|tv}/{token:[A-Za-z0-9]+}/master.m3u8", handler.MasterPlaylist).Methods("GET")
-    router.HandleFunc("/{type:movie|tv}/{token:[A-Za-z0-9]+}/{quality:[0-9]{3,4}}/index.m3u8", handler.StreamPlaylist).Methods("GET")
-    router.HandleFunc("/{type:movie|tv}/{token:[A-Za-z0-9]+}/file.key", handler.StreamKey).Methods("GET")
-    router.HandleFunc("/{type:movie|tv}/{id:[0-9]{1,10}}/{quality:[0-9]{3,4}}/s/{segment:[0-9]{4,5}.ts}", handler.StreamSegment).Methods("GET")
+    router.HandleFunc("/{category:movie|tv}/{token:[A-Za-z0-9]+}/master.m3u8", handler.MasterPlaylist).Methods("GET")
+    router.HandleFunc("/{category:movie|tv}/{token:[A-Za-z0-9]+}/{quality:[0-9]{3,4}}/index.m3u8", handler.StreamPlaylist).Methods("GET")
+    router.HandleFunc("/{category:movie|tv}/{token:[A-Za-z0-9]+}/file.key", handler.StreamKey).Methods("GET")
+    router.HandleFunc("/movie/{id:[0-9]{1,10}}/{quality:[0-9]{3,4}}/s/{segment:[0-9]{4,5}.ts}", handler.StreamMovieSegment).Methods("GET")
+    router.HandleFunc("/tv/{id:[0-9]{1,10}}/{season:[0-9]{1,10}}/{episode:[0-9]{1,10}}/{quality:[0-9]{3,4}}/s/{segment:[0-9]{4,5}.ts}", handler.StreamTVSegment).Methods("GET")
 
     router.Use(middleware.PanicRecover)
     router.Use(middleware.Secure)

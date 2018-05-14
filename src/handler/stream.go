@@ -38,8 +38,8 @@ func MasterPlaylist(w http.ResponseWriter, r *http.Request) {
         Name:       "720p HD",
     }
 
-    master.Append(fmt.Sprintf("/movie/%s/%d/index.m3u8", vars["token"], 480), nil, params480p)
-    master.Append(fmt.Sprintf("/movie/%s/%d/index.m3u8", vars["token"], 720), nil, params720p)
+    master.Append(fmt.Sprintf("/%s/%s/%d/index.m3u8", vars["category"], vars["token"], 480), nil, params480p)
+    master.Append(fmt.Sprintf("/%s/%s/%d/index.m3u8", vars["category"], vars["token"], 720), nil, params720p)
 
     w.Header().Set("Content-Type", "application/x-mpegURL")
     w.Write(master.Encode().Bytes())
@@ -47,7 +47,13 @@ func MasterPlaylist(w http.ResponseWriter, r *http.Request) {
 
 func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    file := cfg.MoviesPath + vars["id"] + "/" + vars["quality"] + "/index.m3u8"
+    var file string
+
+    if vars["category"] == "tv" {
+        file = cfg.Path + vars["category"] + "s/" + vars["id"] + "/" + vars["season"] + "/" + vars["episode"] + "/" + vars["quality"] + "/index.m3u8"
+    } else {
+        file = cfg.Path + vars["category"] + "s/" + vars["id"] + "/" + vars["quality"] + "/index.m3u8"
+    }
 
     if cfg.Debug.VerbosityLevel >= 1 {
         log.Debug(file)
@@ -136,7 +142,7 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
 
 func StreamKey(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    file := cfg.MoviesPath + vars["id"] + "/file.key"
+    file := cfg.Path + vars["category"] + "s/" + vars["id"] + "/file.key"
 
     if cfg.Debug.VerbosityLevel >= 1 {
         log.Debug(file)
@@ -146,9 +152,21 @@ func StreamKey(w http.ResponseWriter, r *http.Request) {
     http.ServeFile(w, r, file)
 }
 
-func StreamSegment(w http.ResponseWriter, r *http.Request) {
+func StreamMovieSegment(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    file := cfg.MoviesPath + vars["id"] + "/" + vars["quality"] + "/s/" + vars["segment"]
+    file := cfg.Path + "movies/" + vars["id"] + "/" + vars["quality"] + "/s/" + vars["segment"]
+
+    if cfg.Debug.VerbosityLevel >= 1 {
+        log.Debug(file)
+    }
+
+    w.Header().Set("Content-Type", "video/MP2T")
+    http.ServeFile(w, r, file)
+}
+
+func StreamTVSegment(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    file := cfg.Path + "tvs/" + vars["id"] + "/" + vars["season"] + "/" + vars["episode"] + "/" + vars["quality"] + "/s/" + vars["segment"]
 
     if cfg.Debug.VerbosityLevel >= 1 {
         log.Debug(file)
@@ -190,14 +208,9 @@ func openPlaylist(file string) (*m3u8.MediaPlaylist, error) {
 func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, token string) error {
     var err error
 
-    //re := regexp.MustCompile(`\/[a-zA-Z0-9]+\/s\/([0-9]+).ts`)
-    //playlist.Segments[0].URI = re.ReplaceAllString(playlist.Segments[0].URI, "/"+token+"/s/$1.ts")
-
     if playlist.Key != nil {
         playlist.Segments[0].Key.URI = "/" + token + "/file.key"
     }
-
-    playlist.Segments[0].URI = "/movie" + playlist.Segments[0].URI // FIXME
 
     err = destination.AppendSegment(playlist.Segments[0])
 
@@ -215,8 +228,6 @@ func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, token 
 
     for _, segment := range playlist.Segments[1:playlist.Count()] {
         if segment != nil {
-            //segment.URI = re.ReplaceAllString(segment.URI, "/"+token+"/s/$1.ts")
-            segment.URI = "/movie" + segment.URI // FIXME
             err = destination.AppendSegment(segment)
 
             if err != nil {
