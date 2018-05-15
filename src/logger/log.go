@@ -17,6 +17,7 @@ var cfg = config.Get()
 
 func Init() *logrus.Logger {
     logger := logrus.New()
+    logger.Level = logrus.DebugLevel
 
     logger.Hooks.Add(getElasticSearchHook())
     logger.Hooks.Add(getFileSystemHook())
