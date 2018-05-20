@@ -184,9 +184,9 @@ func StreamKey(w http.ResponseWriter, r *http.Request) {
     var file string
 
     if vars["category"] == "tv" {
-        file = cfg.Path + "movies/" + vars["id"] + "/" + vars["season"] + "/" + vars["episode"] + "/" + vars["quality"] + "/file.key"
+        file = cfg.Path + "tvs/" + vars["id"] + "/" + vars["season"] + "/" + vars["episode"] + "/file.key"
     } else {
-        file = cfg.Path + "tvs/" + vars["id"] + "/" + vars["quality"] + "/file.key"
+        file = cfg.Path + "movies/" + vars["id"] + "/file.key"
     }
 
     if cfg.Debug.VerbosityLevel >= 1 {
@@ -296,7 +296,7 @@ func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, vars m
     var err error
 
     if playlist.Key != nil {
-        playlist.Segments[0].Key.URI = "/" + vars["category"] + "/" + vars["token"] + "/" + vars["quality"] + "/file.key"
+        playlist.Segments[0].Key.URI = "/" + vars["category"] + "/" + vars["token"] + "/file.key"
     }
 
     err = destination.AppendSegment(playlist.Segments[0])
