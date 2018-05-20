@@ -27,9 +27,9 @@ func MasterPlaylist(w http.ResponseWriter, r *http.Request) {
     master := m3u8.NewMasterPlaylist()
 
     params720p := m3u8.VariantParams{
-        Bandwidth:    6000000,
-        Resolution:   "1280x720",
-        Name:         "720p HD",
+        Bandwidth:  6000000,
+        Resolution: "1280x720",
+        Name:       "720p HD",
     }
 
     params480p := m3u8.VariantParams{
@@ -123,7 +123,7 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     isFirst := true
 
     if advert != nil {
-        err = addPlaylist(playlist, advert, isFirst, "???")
+        err = addPlaylist(playlist, advert, isFirst, "???", "movie")
 
         if err != nil {
             panic(errors.Error{
@@ -141,7 +141,7 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
         isFirst = false
     }
 
-    err = addPlaylist(playlist, movie, isFirst, vars["token"])
+    err = addPlaylist(playlist, movie, isFirst, vars["token"], vars["quality"])
 
     if err != nil {
         panic(errors.Error{
@@ -245,7 +245,6 @@ func StreamTVSubtitle(w http.ResponseWriter, r *http.Request) {
     http.ServeFile(w, r, file)
 }
 
-
 func LoadAdvert(id string) {
     advert := make(Advert)
 
@@ -293,11 +292,11 @@ func openPlaylist(file string) (*m3u8.MediaPlaylist, error) {
     return p.(*m3u8.MediaPlaylist), nil
 }
 
-func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, token string) error {
+func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, token, category string) error {
     var err error
 
     if playlist.Key != nil {
-        playlist.Segments[0].Key.URI = "/" + token + "/file.key"
+        playlist.Segments[0].Key.URI = "/" + category + "/" + token + "/file.key"
     }
 
     err = destination.AppendSegment(playlist.Segments[0])
