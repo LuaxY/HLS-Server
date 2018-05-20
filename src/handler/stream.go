@@ -123,7 +123,7 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     isFirst := true
 
     if advert != nil {
-        err = addPlaylist(playlist, advert, isFirst, "???", "movie")
+        err = addPlaylist(playlist, advert, isFirst, nil) // TODO check for possible error if intro/advert is encrypted
 
         if err != nil {
             panic(errors.Error{
@@ -141,7 +141,7 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
         isFirst = false
     }
 
-    err = addPlaylist(playlist, movie, isFirst, vars["token"], vars["category"])
+    err = addPlaylist(playlist, movie, isFirst, vars)
 
     if err != nil {
         panic(errors.Error{
@@ -292,11 +292,11 @@ func openPlaylist(file string) (*m3u8.MediaPlaylist, error) {
     return p.(*m3u8.MediaPlaylist), nil
 }
 
-func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, token, category string) error {
+func addPlaylist(destination, playlist *m3u8.MediaPlaylist, isFirst bool, vars map[string]string) error {
     var err error
 
     if playlist.Key != nil {
-        playlist.Segments[0].Key.URI = "/" + category + "/" + token + "/file.key"
+        playlist.Segments[0].Key.URI = "/" + vars["category"] + "/" + vars["token"] + "/" + vars["quality"] + "/file.key"
     }
 
     err = destination.AppendSegment(playlist.Segments[0])
