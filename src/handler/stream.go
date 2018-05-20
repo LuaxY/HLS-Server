@@ -141,7 +141,7 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
         isFirst = false
     }
 
-    err = addPlaylist(playlist, movie, isFirst, vars["token"], vars["quality"])
+    err = addPlaylist(playlist, movie, isFirst, vars["token"], vars["category"])
 
     if err != nil {
         panic(errors.Error{
