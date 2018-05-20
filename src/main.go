@@ -21,6 +21,8 @@ var cfg = config.Get()
 func main() {
     rand.Seed(time.Now().Unix())
 
+    handler.LoadAdvert("0") // Intro
+
     router := mux.NewRouter()
     router.HandleFunc("/{category:movie|tv}/{token:[A-Za-z0-9]+}/master.m3u8", handler.MasterPlaylist).Methods("GET")
     router.HandleFunc("/{category:movie|tv}/{token:[A-Za-z0-9]+}/{quality:[0-9]{3,4}}/index.m3u8", handler.StreamPlaylist).Methods("GET")

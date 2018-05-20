@@ -38,7 +38,7 @@ func AES(next http.Handler) http.Handler {
 
             re := regexp.MustCompile(`^\/(tv|movie)\/[a-zA-Z0-9]+\/(.*)`)
 
-            if vars["season"] != "" && vars["episode"] != "" {
+            if vars["category"] == "tv" {
                 r.RequestURI = re.ReplaceAllString(r.RequestURI, "/"+vars["category"]+"/"+vars["id"]+"/"+vars["season"]+"/"+vars["episode"]+"/$2")
             } else {
                 r.RequestURI = re.ReplaceAllString(r.RequestURI, "/"+vars["category"]+"/"+vars["id"]+"/$2")

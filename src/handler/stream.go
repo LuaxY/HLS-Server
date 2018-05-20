@@ -16,11 +16,11 @@ import (
     "github.com/sirupsen/logrus"
 )
 
+type Advert map[string]*m3u8.MediaPlaylist
+
 var log = logger.Get()
 var cfg = config.Get()
-var adverts []*m3u8.MediaPlaylist
-
-//loadAdvert(cfg.MoviePath + "warning/index.m3u8")
+var adverts []Advert
 
 func MasterPlaylist(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
@@ -101,7 +101,7 @@ func StreamPlaylist(w http.ResponseWriter, r *http.Request) {
     var advert *m3u8.MediaPlaylist
 
     if len(adverts) > 0 {
-        advert = adverts[random(0, len(adverts))]
+        advert = adverts[random(0, len(adverts))][vars["quality"]]
 
         if advert != nil {
             size += advert.Count()
@@ -248,15 +248,34 @@ func StreamTVSubtitle(w http.ResponseWriter, r *http.Request) {
     http.ServeFile(w, r, file)
 }
 
-func loadAdvert(file string) {
-    playlist, err := openPlaylist(file)
 
-    if err != nil {
-        log.Error(err)
-        return
+func LoadAdvert(id string) {
+    advert := make(Advert)
+
+    for _, quality := range []string{"480", "720"} {
+        file := cfg.Path + "movies/" + id + "/" + quality + "/index.m3u8"
+
+        if cfg.Debug.VerbosityLevel >= 1 {
+            log.Debug(file)
+        }
+
+        playlist, err := openPlaylist(file)
+
+        if err != nil {
+            panic(errors.Error{
+                err,
+                logrus.Fields{
+                    "id":      id,
+                    "quality": quality,
+                    "file":    file,
+                },
+            })
+        }
+
+        advert[quality] = playlist
     }
 
-    adverts = append(adverts, playlist)
+    adverts = append(adverts, advert)
 }
 
 func openPlaylist(file string) (*m3u8.MediaPlaylist, error) {
