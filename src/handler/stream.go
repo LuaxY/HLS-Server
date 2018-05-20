@@ -26,8 +26,19 @@ func MasterPlaylist(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     master := m3u8.NewMasterPlaylist()
 
+    params720p := m3u8.VariantParams{
+        Bandwidth:    6000000,
+        Resolution:   "1280x720",
+        Name:         "720p HD",
+    }
+
+    params480p := m3u8.VariantParams{
+        Bandwidth:  1200000,
+        Resolution: "854x480",
+        Name:       "480p SD",
+    }
+
     var subtitleFile string
-    var paramsSub m3u8.Alternative
 
     if vars["category"] == "tv" {
         subtitleFile = cfg.Path + "tvs/" + vars["id"] + "/" + vars["season"] + "/" + vars["episode"] + "/sub/subtitle.m3u8"
@@ -36,7 +47,7 @@ func MasterPlaylist(w http.ResponseWriter, r *http.Request) {
     }
 
     if _, err := os.Stat(subtitleFile); err == nil {
-        paramsSub = m3u8.Alternative{
+        params720p.Alternatives = []*m3u8.Alternative{&m3u8.Alternative{
             Type:       "SUBTITLES",
             GroupId:    "subs",
             Name:       "Français",
@@ -45,21 +56,7 @@ func MasterPlaylist(w http.ResponseWriter, r *http.Request) {
             Forced:     "NO",
             Autoselect: "YES",
             URI:        fmt.Sprintf("/%s/%s/sub/subtitle.m3u8", vars["category"], vars["token"]),
-        }
-    }
-
-    params720p := m3u8.VariantParams{
-        Bandwidth:    6000000,
-        Resolution:   "1280x720",
-        Name:         "720p HD",
-        Alternatives: []*m3u8.Alternative{&paramsSub},
-    }
-
-    params480p := m3u8.VariantParams{
-        Bandwidth:  1200000,
-        Resolution: "854x480",
-        Name:       "480p SD",
-        //Alternatives: []*m3u8.Alternative{&paramsSub}, // not needed
+        }}
     }
 
     master.Append(fmt.Sprintf("/%s/%s/%d/index.m3u8", vars["category"], vars["token"], 720), nil, params720p)
